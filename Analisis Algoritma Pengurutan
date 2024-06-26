@@ -5,3 +5,188 @@
 #include <iomanip>
 
 using namespace std;
+int* generateRandomArray(int size) {
+    int* arr = new int[size];
+    generate(arr, arr + size, rand);
+    return arr;
+}
+
+int* generateReverseArray(int size) {
+    int* arr = generateRandomArray(size);
+    sort(arr, arr + size, greater<int>());
+    return arr;
+}
+
+int* generateSortedArray(int size) {
+    int* arr = generateRandomArray(size);
+    sort(arr, arr + size);
+    return arr;
+}
+
+// Bubble Sort
+void bubbleSort(int arr[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+                swap(arr[j], arr[j + 1]);
+            }
+        }
+    }
+}
+
+// Insertion Sort
+void insertionSort(int arr[], int n) {
+    for (int i = 1; i < n; i++) {
+        int key = arr[i];
+        int j = i - 1;
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j--;
+        }
+        arr[j + 1] = key;
+    }
+}
+
+// Selection Sort
+void selectionSort(int arr[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        int min_idx = i;
+        for (int j = i + 1; j < n; j++) {
+            if (arr[j] < arr[min_idx]) {
+                min_idx = j;
+            }
+        }
+        swap(arr[min_idx], arr[i]);
+    }
+}
+
+// Merge Sort
+void merge(int arr[], int left, int mid, int right) {
+    int n1 = mid - left + 1;
+    int n2 = right - mid;
+
+    int* L = new int[n1];
+    int* R = new int[n2];
+
+    for (int i = 0; i < n1; i++)
+        L[i] = arr[left + i];
+    for (int j = 0; j < n2; j++)
+        R[j] = arr[mid + 1 + j];
+
+    int i = 0, j = 0, k = left;
+    while (i < n1 && j < n2) {
+        if (L[i] <= R[j]) {
+            arr[k] = L[i];
+            i++;
+        } else {
+            arr[k] = R[j];
+            j++;
+        }
+        k++;
+    }
+
+    while (i < n1) {
+        arr[k] = L[i];
+        i++;
+        k++;
+    }
+
+    while (j < n2) {
+        arr[k] = R[j];
+        j++;
+        k++;
+    }
+
+    delete[] L;
+    delete[] R;
+}
+
+void mergeSort(int arr[], int left, int right) {
+    if (left < right) {
+        int mid = left + (right - left) / 2;
+        mergeSort(arr, left, mid);
+        mergeSort(arr, mid + 1, right);
+        merge(arr, left, mid, right);
+    }
+}
+
+// Implementasi Quick Sort
+int partition(int arr[], int low, int high) {
+    int pivot = arr[high];
+    int i = (low - 1);
+    for (int j = low; j <= high - 1; j++) {
+        if (arr[j] < pivot) {
+            i++;
+            swap(arr[i], arr[j]);
+        }
+    }
+    swap(arr[i + 1], arr[high]);
+    return (i + 1);
+}
+
+void quickSort(int arr[], int low, int high) {
+    if (low < high) {
+        int pi = partition(arr, low, high);
+        quickSort(arr, low, pi - 1);
+        quickSort(arr, pi + 1, high);
+    }
+}
+
+// Pengujian Kompleksitas
+void testAlgorithm(void (*sortFunc)(int[], int), const string& algorithmName, const int* sizes, int sizeCount) {
+    cout << left << setw(20) << "Algoritma" << setw(20) << "Kondisi";
+    for (int i = 0; i < sizeCount; ++i) {
+        cout << setw(15) << "N=" + to_string(sizes[i]) + " (μs)";
+    }
+    cout << endl;
+
+    for (int k = 0; k < 3; ++k) { 
+        string condition;
+        switch (k) {
+            case 0: condition = "Acak"; break;
+            case 1: condition = "Terurut Terbalik"; break;
+            case 2: condition = "Sudah Terurut"; break;
+        }
+        cout << left << setw(20) << algorithmName << setw(20) << condition;
+
+        for (int i = 0; i < sizeCount; i++) {
+            int size = sizes[i];
+            int* arr;
+            double duration;
+
+            switch (k) {
+                case 0: arr = generateRandomArray(size); break;
+                case 1: arr = generateReverseArray(size); break;
+                case 2: arr = generateSortedArray(size); break;
+            }
+
+            auto start = chrono::high_resolution_clock::now();
+            sortFunc(arr, size);
+            auto end = chrono::high_resolution_clock::now();
+            duration = chrono::duration<double, micro>(end - start).count();
+            cout << setw(15) << duration;
+            delete[] arr;
+        }
+        cout << endl;
+    }
+}
+
+int main() {
+    int sizes[] = {10, 100, 500, 1000, 10000};
+    int sizeCount = sizeof(sizes) / sizeof(sizes[0]);
+
+    cout << left << setw(20) << "Algoritma" << setw(20) << "Kondisi";
+    for (int i = 0; i < sizeCount; ++i) {
+        cout << setw(15) << "N=" + to_string(sizes[i]) + " (μs)";
+    }
+    cout << endl;
+    cout << string(90, '-') << endl;
+
+    testAlgorithm(bubbleSort, "Bubble Sort", sizes, sizeCount);
+    testAlgorithm(insertionSort, "Insertion Sort", sizes, sizeCount);
+    testAlgorithm(selectionSort, "Selection Sort", sizes, sizeCount);
+    testAlgorithm([](int arr[], int size) { mergeSort(arr, 0, size - 1); }, "Merge Sort", sizes, sizeCount);
+    testAlgorithm([](int arr[], int size) { quickSort(arr, 0, size - 1); }, "Quick Sort", sizes, sizeCount);
+
+    return 0;
+}
